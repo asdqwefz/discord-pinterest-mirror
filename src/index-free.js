@@ -27,9 +27,7 @@ async function handleMessage(message) {
     const urlKey = `url:${img.url.split("?")[0]}`;
     if (isDone(key) || isDone(urlKey)) continue;
     try {
-      const dl = await fetch(img.url);
-      if (!dl.ok) throw new Error(`indirilemedi ${dl.status}`);
-      const raw = Buffer.from(await dl.arrayBuffer());
+      const raw = await download(img.url);
       const { buffer, filename } = await normalizeForPinterest(raw, img.name);
       const file = path.join(tmpDir, `${message.id}-${filename.replace(/[^a-z0-9._-]+/gi, "_")}`);
       fs.writeFileSync(file, buffer);
@@ -52,12 +50,36 @@ async function handleMessage(message) {
   }
 }
 
+async function fetchBatch(channel, before, tries = 0) {
+  try {
+    return await channel.messages.fetch({ limit: 100, before });
+  } catch (e) {
+    // Discord rate-limit / ag kesintisi: bekleyip tekrar dene, cökme
+    const wait = Math.min(15000 * (tries + 1), 120000);
+    console.log(`Mesaj alinamadi (${e.message?.slice(0, 80)}), ${wait / 1000}sn sonra tekrar...`);
+    await new Promise((r) => setTimeout(r, wait));
+    return fetchBatch(channel, before, tries + 1);
+  }
+}
+
+async function download(url, tries = 0) {
+  try {
+    const dl = await fetch(url);
+    if (!dl.ok) throw new Error(`indirilemedi ${dl.status}`);
+    return Buffer.from(await dl.arrayBuffer());
+  } catch (e) {
+    if (tries >= 2) throw e;
+    await new Promise((r) => setTimeout(r, 3000 * (tries + 1)));
+    return download(url, tries + 1);
+  }
+}
+
 async function backfill(channel) {
   console.log("Eski fotolar taraniyor (free)...");
   let before = undefined;
   let total = 0;
   while (true) {
-    const batch = await channel.messages.fetch({ limit: 100, before });
+    const batch = await fetchBatch(channel, before);
     if (batch.size === 0) break;
     const sorted = [...batch.values()].sort((a, b) => a.createdTimestamp - b.createdTimestamp);
     for (const m of sorted) await handleMessage(m);
