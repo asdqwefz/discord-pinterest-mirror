@@ -20,7 +20,8 @@ async function handleMessage(message) {
   const images = collectImageUrls(message);
   for (const img of images) {
     const key = `${message.id}:${img.id}`;
-    if (isDone(key)) continue;
+    const urlKey = `url:${img.url.split("?")[0]}`;
+    if (isDone(key) || isDone(urlKey)) continue;
     try {
       const dl = await fetch(img.url);
       if (!dl.ok) throw new Error(`indirilemedi ${dl.status}`);
@@ -37,6 +38,7 @@ async function handleMessage(message) {
       });
 
       markDone(key);
+      markDone(urlKey);
       console.log(`OK -> ${filename} (${message.id})`);
       await new Promise((r) => setTimeout(r, 2000)); // Pinterest rate-limit korumasi
     } catch (e) {

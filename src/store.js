@@ -1,6 +1,6 @@
 import fs from "node:fs";
 
-const PATH = new URL("../../processed.json", import.meta.url);
+const PATH = new URL("../processed.json", import.meta.url);
 
 function load() {
   try {
