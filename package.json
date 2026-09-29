@@ -6,11 +6,15 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "backfill": "BACKFILL_ONLY=1 node src/index.js"
+    "backfill": "BACKFILL_ONLY=1 node src/index.js",
+    "start:free": "node src/index-free.js",
+    "backfill:free": "BACKFILL_ONLY=1 node src/index-free.js"
   },
   "dependencies": {
     "discord.js-selfbot-v13": "^3.7.1",
     "dotenv": "^16.4.5",
+    "pinterest-js-client": "^1.0.8",
+    "playwright": "^1.63.0",
     "sharp": "^0.33.5"
   }
 }
