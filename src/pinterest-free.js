@@ -120,10 +120,10 @@ export async function createPinFree({ imageFile, title, description, boardName }
   const publishBtn = '[data-test-id="board-dropdown-save-button"]';
   await page.waitForSelector(publishBtn, { timeout: 15000 });
   await page.locator(publishBtn).first().click({ force: true });
-  await sleep(2000);
+  await sleep(5000);
 
   const pinLink = 'a[data-test-id="seeItNow"], a[href*="/pin/"]';
-  const found = await page.waitForSelector(pinLink, { timeout: 15000 }).catch(() => null);
+  const found = await page.waitForSelector(pinLink, { timeout: 30000 }).catch(() => null);
   await page.keyboard.press("Escape").catch(() => {});
   if (!found) console.log("Uyari: basari popup'i gorulmedi, pin yine de atilmis olabilir");
   return { ok: true };
