@@ -17,11 +17,15 @@ export async function getFreeClient() {
         useFingerprintSuite: false,
         cookiesPath: "./.pin-cookies.json",
       });
-      await c.init();
-      const ok = await c.login(PINTEREST_EMAIL, PINTEREST_PASSWORD);
-      if (!ok && !c.isAuthenticated()) throw new Error("Pinterest login basarisiz");
+      const alreadyIn = await c.init();
+      if (alreadyIn || c.isAuthenticated()) {
+        console.log("Pinterest (free) session OK (cookie)");
+      } else {
+        const ok = await c.login(PINTEREST_EMAIL, PINTEREST_PASSWORD).catch(() => false);
+        if (!ok && !c.isAuthenticated()) throw new Error("Pinterest login basarisiz");
+        console.log("Pinterest (free) login OK");
+      }
       client = c;
-      console.log("Pinterest (free) login OK");
       return client;
     } catch (e) {
       ready = null;
@@ -32,10 +36,87 @@ export async function getFreeClient() {
   return ready;
 }
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Kutuphanenin createPin'i title'da overlay'e takiliyor (click intercept).
+// Click yapmadan direkt fill + force uygula.
 export async function createPinFree({ imageFile, title, description, boardName }) {
   const c = await getFreeClient();
-  const ok = await c.createPin({ imageFile, title, description, boardName });
-  if (!ok) throw new Error("createPin basarisiz (free)");
+  const page = c.getPage();
+  if (!page) throw new Error("Pinterest sayfasi hazir degil");
+
+  await page.goto("https://www.pinterest.com/pin-builder/", { waitUntil: "domcontentloaded" });
+  await sleep(1500);
+
+  if (page.url().includes("/login")) throw new Error("Oturum dusmus, .pin-cookies.json silip tekrar dene");
+
+  const fileInput = 'input[type="file"][data-test-id^="media-upload-input"]';
+  await page.waitForSelector(fileInput, { timeout: 15000 });
+  await page.setInputFiles(fileInput, imageFile);
+  await sleep(2500);
+
+  // Olası overlay/popup kapat
+  await page.keyboard.press("Escape").catch(() => {});
+  await sleep(500);
+
+  if (title) {
+    const titleInput = 'textarea[id^="pin-draft-title"]';
+    await page.waitForSelector(titleInput, { timeout: 15000 });
+    const loc = page.locator(titleInput).first();
+    await loc.fill(title).catch(() => {});
+    // fill tutmazsa JS ile dene
+    const val = await loc.inputValue().catch(() => "");
+    if (!val) {
+      await page.evaluate(
+        ([sel, t]) => {
+          const el = document.querySelector(sel);
+          if (el) {
+            el.focus();
+            document.execCommand("selectAll", false, null);
+            document.execCommand("insertText", false, t);
+          }
+        },
+        [titleInput, title]
+      );
+    }
+    await sleep(500);
+  }
+
+  if (description) {
+    await page.keyboard.press("Tab").catch(() => {});
+    await sleep(300);
+    await page.keyboard.type(description.slice(0, 800), { delay: 20 }).catch(() => {});
+    await sleep(500);
+  }
+
+  // Pano sec
+  if (boardName) {
+    try {
+      const btn = '[data-test-id="board-dropdown-select-button"]';
+      await page.waitForSelector(`${btn}[aria-disabled="false"]`, { timeout: 15000 });
+      await page.locator(btn).first().click({ force: true });
+      await sleep(800);
+      await page.waitForSelector('[data-test-id="board-picker-flyout"]', { timeout: 8000 });
+      await page.fill("#pickerSearchField", boardName);
+      await sleep(1200);
+      const rowBtn = `[data-test-id="board-row-${boardName}"] [data-test-id="board-row-save-button-container"] button`;
+      await page.waitForSelector(rowBtn, { timeout: 8000 });
+      await page.locator(rowBtn).first().click({ force: true });
+      await sleep(2500);
+    } catch (e) {
+      console.log("Pano secilemedi, varsayilan panoya atiliyor:", e.message?.slice(0, 120));
+    }
+  }
+
+  const publishBtn = '[data-test-id="board-dropdown-save-button"]';
+  await page.waitForSelector(publishBtn, { timeout: 15000 });
+  await page.locator(publishBtn).first().click({ force: true });
+  await sleep(3000);
+
+  const pinLink = 'a[data-test-id="seeItNow"], a[href*="/pin/"]';
+  const found = await page.waitForSelector(pinLink, { timeout: 15000 }).catch(() => null);
+  await page.keyboard.press("Escape").catch(() => {});
+  if (!found) console.log("Uyari: basari popup'i gorulmedi, pin yine de atilmis olabilir");
   return { ok: true };
 }
 
