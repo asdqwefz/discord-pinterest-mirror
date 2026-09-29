@@ -1,4 +1,7 @@
 import { PinterestClient } from "pinterest-js-client";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
 let client = null;
 let ready = null;
@@ -127,7 +130,7 @@ export async function createPinFree({ imageFile, title, description, boardName }
   await page.keyboard.press("Escape").catch(() => {});
   if (!found) {
     try {
-      const shot = `pin-hata-${Date.now()}.png`;
+      const shot = path.join(os.tmpdir(), `pin-hata-${Date.now()}.png`);
       await page.screenshot({ path: shot });
       console.log("Hata goruntusu:", shot, "| sayfa:", page.url());
     } catch {}
