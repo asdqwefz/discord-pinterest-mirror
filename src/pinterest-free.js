@@ -125,7 +125,14 @@ export async function createPinFree({ imageFile, title, description, boardName }
   const pinLink = 'a[data-test-id="seeItNow"], a[href*="/pin/"]';
   const found = await page.waitForSelector(pinLink, { timeout: 30000 }).catch(() => null);
   await page.keyboard.press("Escape").catch(() => {});
-  if (!found) console.log("Uyari: basari popup'i gorulmedi, pin yine de atilmis olabilir");
+  if (!found) {
+    try {
+      const shot = `pin-hata-${Date.now()}.png`;
+      await page.screenshot({ path: shot });
+      console.log("Hata goruntusu:", shot, "| sayfa:", page.url());
+    } catch {}
+    throw new Error("basari popup'i gorulmedi, pin atilamamis olabilir (kaydedilmedi, sonra tekrar denenecek)");
+  }
   return { ok: true };
 }
 
