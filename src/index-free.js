@@ -5,7 +5,7 @@ import path from "node:path";
 import { Client } from "discord.js-selfbot-v13";
 import { isDone, markDone } from "./store.js";
 import { collectImageUrls, normalizeForPinterest } from "./images.js";
-import { createPinFree, closeFree } from "./pinterest-free.js";
+import { createPinFree, closeFree, getFreeClient } from "./pinterest-free.js";
 
 // FREE MOD: resmi API yok, email+sifre ile giris. Onay beklemez.
 // .env: DISCORD_TOKEN, DISCORD_CHANNEL_ID, PINTEREST_EMAIL, PINTEREST_PASSWORD, PINTEREST_BOARD_NAME
@@ -69,6 +69,12 @@ async function backfill(channel) {
 
 client.once("ready", async () => {
   console.log(`Selfbot: ${client.user.tag}`);
+  try {
+    await getFreeClient();
+  } catch (e) {
+    console.error("Pinterest giris hatasi:", e.message);
+    process.exit(1);
+  }
   const channel = await client.channels.fetch(DISCORD_CHANNEL_ID).catch(() => null);
   if (!channel?.messages) {
     console.error("Kanal bulunamadi.");
