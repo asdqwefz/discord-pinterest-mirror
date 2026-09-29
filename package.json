@@ -1,0 +1,16 @@
+{
+  "name": "discord-pinterest-mirror",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Discord kanalindaki fotolari Pinterest'e otomatik paylasir (discord.js-selfbot-v13 ile)",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "backfill": "BACKFILL_ONLY=1 node src/index.js"
+  },
+  "dependencies": {
+    "discord.js-selfbot-v13": "^3.7.1",
+    "dotenv": "^16.4.5",
+    "sharp": "^0.33.5"
+  }
+}
