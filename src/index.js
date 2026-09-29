@@ -30,7 +30,7 @@ async function handleMessage(message) {
       await createPin({
         token: PINTEREST_ACCESS_TOKEN,
         boardId: PINTEREST_BOARD_ID,
-        title: filename,
+        title: `crownes ${filename}`,
         description: `${process.env.PINTEREST_DESCRIPTION_PREFIX || ""} discord:${message.id}`.trim(),
         base64: buffer.toString("base64"),
         contentType: mime,

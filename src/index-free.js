@@ -35,7 +35,7 @@ async function handleMessage(message) {
 
       await createPinFree({
         imageFile: file,
-        title: filename.slice(0, 100),
+        title: `crownes ${filename}`.slice(0, 100),
         description: `${process.env.PINTEREST_DESCRIPTION_PREFIX || ""} discord:${message.id}`.trim(),
         boardName: PINTEREST_BOARD_NAME,
       });
