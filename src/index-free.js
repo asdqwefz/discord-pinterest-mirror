@@ -43,7 +43,7 @@ async function handleMessage(message) {
       markDone(key);
       console.log(`OK(free) -> ${filename} (${message.id})`);
       fs.rmSync(file, { force: true });
-      await new Promise((r) => setTimeout(r, 5000)); // ban korumasi: yavas at
+      await new Promise((r) => setTimeout(r, 2000)); // ban korumasi: pin arasi bekleme
     } catch (e) {
       console.error(`HATA ${message.id} ${img.url}:`, e.message);
     }

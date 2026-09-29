@@ -53,11 +53,11 @@ export async function createPinFree({ imageFile, title, description, boardName }
   const fileInput = 'input[type="file"][data-test-id^="media-upload-input"]';
   await page.waitForSelector(fileInput, { timeout: 15000 });
   await page.setInputFiles(fileInput, imageFile);
-  await sleep(2500);
+  await sleep(1500);
 
   // Olası overlay/popup kapat
   await page.keyboard.press("Escape").catch(() => {});
-  await sleep(500);
+  await sleep(300);
 
   if (title) {
     const titleInput = 'textarea[id^="pin-draft-title"]';
@@ -79,14 +79,14 @@ export async function createPinFree({ imageFile, title, description, boardName }
         [titleInput, title]
       );
     }
-    await sleep(500);
+    await sleep(300);
   }
 
   if (description) {
     await page.keyboard.press("Tab").catch(() => {});
+    await sleep(200);
+    await page.keyboard.type(description.slice(0, 800), { delay: 10 }).catch(() => {});
     await sleep(300);
-    await page.keyboard.type(description.slice(0, 800), { delay: 20 }).catch(() => {});
-    await sleep(500);
   }
 
   // Pano sec (isimden bagimsiz: aramada cikan ilk panoya tikla)
@@ -95,10 +95,10 @@ export async function createPinFree({ imageFile, title, description, boardName }
       const btn = '[data-test-id="board-dropdown-select-button"]';
       await page.waitForSelector(`${btn}[aria-disabled="false"]`, { timeout: 15000 });
       await page.locator(btn).first().click({ force: true });
-      await sleep(800);
+      await sleep(500);
       await page.waitForSelector('[data-test-id="board-picker-flyout"]', { timeout: 8000 });
       await page.fill("#pickerSearchField", boardName);
-      await sleep(1500);
+      await sleep(800);
       // Once exact test-id dene, olmazsa aramada cikan ilk pano satirina tikla
       const exactBtn = `[data-test-id="board-row-${boardName}"] [data-test-id="board-row-save-button-container"] button`;
       const firstBtn = '[data-test-id="board-picker-flyout"] [data-test-id="board-row-save-button-container"] button';
@@ -110,7 +110,7 @@ export async function createPinFree({ imageFile, title, description, boardName }
         target = page.locator(firstBtn).first();
       }
       await target.click({ force: true });
-      await sleep(2500);
+      await sleep(1200);
       console.log(`Pano secildi: ${boardName}`);
     } catch (e) {
       console.log("Pano secilemedi, varsayilan panoya atiliyor:", e.message?.slice(0, 120));
@@ -120,7 +120,7 @@ export async function createPinFree({ imageFile, title, description, boardName }
   const publishBtn = '[data-test-id="board-dropdown-save-button"]';
   await page.waitForSelector(publishBtn, { timeout: 15000 });
   await page.locator(publishBtn).first().click({ force: true });
-  await sleep(3000);
+  await sleep(2000);
 
   const pinLink = 'a[data-test-id="seeItNow"], a[href*="/pin/"]';
   const found = await page.waitForSelector(pinLink, { timeout: 15000 }).catch(() => null);
