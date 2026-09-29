@@ -89,7 +89,7 @@ export async function createPinFree({ imageFile, title, description, boardName }
     await sleep(500);
   }
 
-  // Pano sec
+  // Pano sec (isimden bagimsiz: aramada cikan ilk panoya tikla)
   if (boardName) {
     try {
       const btn = '[data-test-id="board-dropdown-select-button"]';
@@ -98,11 +98,20 @@ export async function createPinFree({ imageFile, title, description, boardName }
       await sleep(800);
       await page.waitForSelector('[data-test-id="board-picker-flyout"]', { timeout: 8000 });
       await page.fill("#pickerSearchField", boardName);
-      await sleep(1200);
-      const rowBtn = `[data-test-id="board-row-${boardName}"] [data-test-id="board-row-save-button-container"] button`;
-      await page.waitForSelector(rowBtn, { timeout: 8000 });
-      await page.locator(rowBtn).first().click({ force: true });
+      await sleep(1500);
+      // Once exact test-id dene, olmazsa aramada cikan ilk pano satirina tikla
+      const exactBtn = `[data-test-id="board-row-${boardName}"] [data-test-id="board-row-save-button-container"] button`;
+      const firstBtn = '[data-test-id="board-picker-flyout"] [data-test-id="board-row-save-button-container"] button';
+      let target = null;
+      if (await page.locator(exactBtn).first().count()) {
+        target = page.locator(exactBtn).first();
+      } else {
+        await page.waitForSelector(firstBtn, { timeout: 8000 });
+        target = page.locator(firstBtn).first();
+      }
+      await target.click({ force: true });
       await sleep(2500);
+      console.log(`Pano secildi: ${boardName}`);
     } catch (e) {
       console.log("Pano secilemedi, varsayilan panoya atiliyor:", e.message?.slice(0, 120));
     }
